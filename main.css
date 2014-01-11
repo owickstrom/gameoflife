@@ -1,3 +1,28 @@
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body,
+html {
+  margin: 0;
+}
+
 .game-of-life {
-    font-family: Monaco, monospace;
+  font-family: Monaco, monospace;
+  font-size: 1.5rem;
+}
+
+.game-of-life table {
+  border: 1px solid #eee;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.game-of-life td {
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
 }

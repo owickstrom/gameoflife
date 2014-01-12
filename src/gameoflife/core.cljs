@@ -53,16 +53,12 @@
 
 (defn render! [ctx {:keys [w h]} cells]
   (let [{[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
-        xs (range x1 (inc x2))
-        ys (range y1 (inc y2))
         cell-width (Math/floor (/ w (- (inc x2) x1)))
         cell-height (Math/floor (/ h (- (inc y2) y1)))]
     (clear! ctx {:w w :h h})
-    (doseq [x xs
-            y ys
+    (doseq [[x y] cells
             :let [x-start (* cell-width (- x x1))
-                  y-start (* cell-height (- y y1))]
-            :when (cells [x y])]
+                  y-start (* cell-height (- y y1))]]
       (-> ctx
           (canvas/fill-style "#a00")
           (canvas/fill-rect {:x x-start :y y-start :w cell-width :h cell-height})))))

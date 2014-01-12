@@ -55,8 +55,8 @@
   (let [{[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         xs (range x1 (inc x2))
         ys (range y1 (inc y2))
-        cell-width (Math/round (/ w (- (inc x2) x1)))
-        cell-height (Math/round (/ h (- (inc y2) y1)))]
+        cell-width (Math/floor (/ w (- (inc x2) x1)))
+        cell-height (Math/floor (/ h (- (inc y2) y1)))]
     (clear! ctx {:w w :h h})
     (doseq [x xs
             y ys

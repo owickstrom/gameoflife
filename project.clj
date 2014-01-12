@@ -15,6 +15,7 @@
   :cljsbuild {
               :builds {:dev {:source-paths ["src"]
                              :compiler {:output-to "gameoflife-debug.js"
+                                        :output-dir "out"
                                         :optimizations :none
                                         :source-map true}}
                        :prod {:source-paths ["src"]

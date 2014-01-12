@@ -32,7 +32,7 @@
     (node [:table
            (map (fn [y]
                   [:tr (map (fn [x]
-                              [:td (if (cells [x y]) "O" " ")])
+                              [:td (if (cells [x y]) "☺" " ")])
                             xs)])
                 ys)])))
 
@@ -45,7 +45,7 @@
 (defn start [first]
   (go-loop [cells first]
            (render-table cells)
-           (<! (timeout (/ 1000 5.0)))
+           (<! (timeout (/ 1000 3.0)))
            (recur (next-gen cells))))
 
 (start #{[1 1] [1 2] [1 3] [1 4] [1 5]})

@@ -9,8 +9,7 @@ html {
 }
 
 .game-of-life {
-<<<<<<< HEAD
-  font-family: Monaco, monospace;
+  font-family: Courier, monospace;
   font-size: 1.5rem;
 }
 
@@ -21,24 +20,15 @@ html {
 }
 
 .game-of-life td {
+  border: 1px solid #eee;
+  border-collapse: collapse;
   width: 30px;
   height: 30px;
   overflow: hidden;
   white-space: nowrap;
   text-align: center;
-=======
-    font-family: Courier, monospace;
 }
 
 .off {
-    color: white;
-}
-
-table {
-    border-collapse: collapse;
-}
-
-table, td {
-    border: 1px solid black;
->>>>>>> Improved visual experience a little.
+  color: white;
 }

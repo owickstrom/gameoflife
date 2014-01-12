@@ -23,7 +23,7 @@
 (defn generations [cells]
   (iterate next-gen cells))
 
-(defn table-dimensions [cells]
+(defn grid-dimensions [cells]
   (let [xs (map first cells)
         ys (map second cells)]
     {:x [(apply min xs) (apply max xs)]
@@ -62,8 +62,7 @@
     (.fillRect *canvas-context* x y width height)))
 
 (defn render-canvas! [cells]
-  (let [cell-dimensions (table-dimensions cells)
-        {[x1 x2] :x [y1 y2] :y :as adjusted} (:dimensions (adjust-dimensions cell-dimensions))
+  (let [{[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         xs (range x1 (inc x2))
         ys (range y1 (inc y2))
         cell-width (Math/round (/ *canvas-width* (- (inc x2) x1)))

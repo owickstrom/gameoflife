@@ -1,3 +1,3 @@
-# Conway's Game Of Life
+# Conway's Game of Life
 
-This is a simple version of Conway's Game Of Life, written in ClojureScript.
+This is a simple version of Conway's Game of Life, written in ClojureScript.

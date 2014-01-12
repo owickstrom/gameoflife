@@ -13,10 +13,11 @@
   :source-paths ["src"]
 
   :cljsbuild {
-    :builds [{:id "gameoflife"
-              :source-paths ["src"]
-              :compiler {
-                :output-to "gameoflife.js"
-                :output-dir "out"
-                :optimizations :none
-                :source-map true}}]})
+              :builds {:dev {:source-paths ["src"]
+                             :compiler {:output-to "gameoflife-debug.js"
+                                        :optimizations :none
+                                        :source-map true}}
+                       :prod {:source-paths ["src"]
+                              :compiler {:output-to "gameoflife.js"
+                                         :optimizations :advanced
+                                         :pretty-print false}}}})

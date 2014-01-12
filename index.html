@@ -7,8 +7,12 @@
     </head>
     <body>
         <canvas class="game-of-life"></canvas>
+<!-- for production code, comment out these lines and uncomment the last -->
         <script src="out/goog/base.js" type="text/javascript"></script>
-        <script src="gameoflife.js" type="text/javascript"></script>
+        <script src="gameoflife-debug.js" type="text/javascript"></script>
         <script type="text/javascript">goog.require("gameoflife.core");</script>
+<!-- this is the only script line needed for production
+        <script src="gameoflife.js" type="text/javascript"></script>
+-->
     </body>
 </html>

@@ -56,27 +56,25 @@
 (defn clear-canvas! []
   (.clearRect *canvas-context* 0 0 *canvas-width* *canvas-height*))
 
-(defn draw-rect [x y width height fill-style stroke-style]
+(defn draw-rect [x y width height fill-style]
   (when fill-style
     (aset *canvas-context* "fillStyle" fill-style)
-    (.fillRect *canvas-context* x y width height))
-  (when stroke-style
-    (aset *canvas-context* "strokeStyle" stroke-style)
-    (.strokeRect *canvas-context* x y width height)))
+    (.fillRect *canvas-context* x y width height)))
 
 (defn render-canvas! [cells]
   (let [cell-dimensions (table-dimensions cells)
         {[x1 x2] :x [y1 y2] :y :as adjusted} (:dimensions (adjust-dimensions cell-dimensions))
         xs (range x1 (inc x2))
         ys (range y1 (inc y2))
-        cell-width (/ *canvas-width* (- (inc x2) x1))
-        cell-height (/ *canvas-height* (- (inc y2) y1))]
+        cell-width (Math/round (/ *canvas-width* (- (inc x2) x1)))
+        cell-height (Math/round (/ *canvas-height* (- (inc y2) y1)))]
     (clear-canvas!)
     (doseq [x xs
             y ys
             :let [x-start (* cell-width (- x x1))
-                  y-start (* cell-height (- y y1))]]
-      (draw-rect x-start y-start cell-width cell-height (if (cells [x y]) "#a00" "#ccc") "black"))))
+                  y-start (* cell-height (- y y1))]
+            :when (cells [x y])]
+      (draw-rect x-start y-start cell-width cell-height "#a00"))))
 
 (defn start [first]
   (init-canvas!)

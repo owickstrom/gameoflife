@@ -14,21 +14,19 @@ html {
 }
 
 .game-of-life table {
-  border: 1px solid #eee;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .game-of-life td {
   border: 1px solid #eee;
-  border-collapse: collapse;
   width: 30px;
   height: 30px;
   overflow: hidden;
-  white-space: nowrap;
   text-align: center;
+  white-space: nowrap;
 }
 
-.off {
+.game-of-life td.off {
   color: white;
 }

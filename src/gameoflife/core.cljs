@@ -2,7 +2,8 @@
   (:require-macros [dommy.macros :refer [node sel sel1]]
                    [cljs.core.async.macros :refer [go-loop]])
   (:require [dommy.core :as dommy]
-            [cljs.core.async :refer [<! timeout]]))
+            [cljs.core.async :refer [<! timeout]]
+            [monet.canvas :as canvas]))
 
 (def state (atom {:dimensions {:x [0 0]
                                :y [0 0]}}))
@@ -43,43 +44,38 @@
          (expand-dimensions (get-in @state [:dimensions])
                             dimensions)))
 
-(def ^:dynamic *canvas* (sel1 :.game-of-life))
-(def ^:dynamic *canvas-context* (.getContext *canvas* "2d"))
-(def ^:dynamic *canvas-width* 500)
-(def ^:dynamic *canvas-height* 500)
+(defn set-size! [canvas {:keys [w h]}]
+  (dommy/set-attr! canvas :width w)
+  (dommy/set-attr! canvas :height h))
 
-(defn init-canvas! []
-  (.log js/console (pr-str *canvas*))
-  (dommy/set-attr! *canvas* :width *canvas-width*)
-  (dommy/set-attr! *canvas* :height *canvas-height*))
+(defn clear! [ctx {:keys [w h]}]
+  (canvas/clear-rect ctx {:x 0 :y 0 :w w :h h}))
 
-(defn clear-canvas! []
-  (.clearRect *canvas-context* 0 0 *canvas-width* *canvas-height*))
-
-(defn draw-rect [x y width height fill-style]
-  (when fill-style
-    (aset *canvas-context* "fillStyle" fill-style)
-    (.fillRect *canvas-context* x y width height)))
-
-(defn render-canvas! [cells]
+(defn render! [ctx {:keys [w h]} cells]
   (let [{[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         xs (range x1 (inc x2))
         ys (range y1 (inc y2))
-        cell-width (Math/round (/ *canvas-width* (- (inc x2) x1)))
-        cell-height (Math/round (/ *canvas-height* (- (inc y2) y1)))]
-    (clear-canvas!)
+        cell-width (Math/round (/ w (- (inc x2) x1)))
+        cell-height (Math/round (/ h (- (inc y2) y1)))]
+    (clear! ctx {:w w :h h})
     (doseq [x xs
             y ys
             :let [x-start (* cell-width (- x x1))
                   y-start (* cell-height (- y y1))]
             :when (cells [x y])]
-      (draw-rect x-start y-start cell-width cell-height "#a00"))))
+      (-> ctx
+          (canvas/fill-style "#a00")
+          (canvas/fill-rect {:x x-start :y y-start :w cell-width :h cell-height})))))
 
 (defn start [first]
-  (init-canvas!)
-  (go-loop [cells first]
-           (render-canvas! cells)
-           (<! (timeout (/ 1000 2.0)))
-           (recur (next-gen cells))))
+  (let [canvas-dimensions {:w 500
+                           :h 500}
+        canvas (sel1 :.game-of-life)
+        ctx (.getContext canvas "2d")]
+    (set-size! canvas canvas-dimensions)
+    (go-loop [cells first]
+             (render! ctx canvas-dimensions cells)
+             (<! (timeout (/ 1000 2.0)))
+             (recur (next-gen cells)))))
 
 (start #{[1 1] [0 3] [1 2] [1 3] [3 2] [5 3] [6 3] [7 3]})

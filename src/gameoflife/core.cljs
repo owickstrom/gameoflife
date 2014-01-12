@@ -30,8 +30,8 @@
     {:x [(apply min xs) (apply max xs)]
      :y [(apply min ys) (apply max ys)]}))
 
-;; old = {:x [0 2] :y [1 5]}]
-;; new = {:x [1 4] :y [0 3]}]
+;; old = {:x [0 2] :y [1 5]}
+;; new = {:x [1 4] :y [0 3]}
 ;; res = {:x [0 4] :y [0 5]}
 (defn expand-dimensions [old new]
   (into {}

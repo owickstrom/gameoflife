@@ -43,27 +43,45 @@
          (expand-dimensions (get-in @state [:dimensions])
                             dimensions)))
 
-(defn html-table [cells]
+(def ^:dynamic *canvas* (sel1 :.game-of-life))
+(def ^:dynamic *canvas-context* (.getContext *canvas* "2d"))
+(def ^:dynamic *canvas-width* 500)
+(def ^:dynamic *canvas-height* 500)
+
+(defn init-canvas! []
+  (.log js/console (pr-str *canvas*))
+  (dommy/set-attr! *canvas* :width *canvas-width*)
+  (dommy/set-attr! *canvas* :height *canvas-height*))
+
+(defn clear-canvas! []
+  (.clearRect *canvas-context* 0 0 *canvas-width* *canvas-height*))
+
+(defn draw-rect [x y width height fill-style stroke-style]
+  (when fill-style
+    (aset *canvas-context* "fillStyle" fill-style)
+    (.fillRect *canvas-context* x y width height))
+  (when stroke-style
+    (aset *canvas-context* "strokeStyle" stroke-style)
+    (.strokeRect *canvas-context* x y width height)))
+
+(defn render-canvas! [cells]
   (let [cell-dimensions (table-dimensions cells)
         {[x1 x2] :x [y1 y2] :y :as adjusted} (:dimensions (adjust-dimensions cell-dimensions))
         xs (range x1 (inc x2))
-        ys (range y1 (inc y2))]
-    (node [:table
-           (map (fn [y]
-                  [:tr (map (fn [x]
-                              [(if (cells [x y]) :td.on :td.off) "✺"]) ;U+273A, Sixteen pointed asterisk
-                            xs)])
-                ys)])))
-
-(defn render-table [cells]
-  (dommy/set-html! (sel1 :.game-of-life) "")
-  (dommy/append!
-   (sel1 :.game-of-life)
-   (html-table cells)))
+        ys (range y1 (inc y2))
+        cell-width (/ *canvas-width* (- (inc x2) x1))
+        cell-height (/ *canvas-height* (- (inc y2) y1))]
+    (clear-canvas!)
+    (doseq [x xs
+            y ys
+            :let [x-start (* cell-width (- x x1))
+                  y-start (* cell-height (- y y1))]]
+      (draw-rect x-start y-start cell-width cell-height (if (cells [x y]) "#a00" "#ccc") "black"))))
 
 (defn start [first]
+  (init-canvas!)
   (go-loop [cells first]
-           (render-table cells)
+           (render-canvas! cells)
            (<! (timeout (/ 1000 2.0)))
            (recur (next-gen cells))))
 

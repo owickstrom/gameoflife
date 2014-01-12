@@ -8,25 +8,31 @@
 (def state (atom {:dimensions {:x [0 0]
                                :y [0 0]}}))
 
-(defn neighbors [[x y]]
+(defn cell-at? [cells x y]
+  (some #(and (= x (:x %1)) (= y (:y %1))) cells))
+
+(defn neighbors [{:keys [x y]}]
   (for [dx [-1 0 1]
         dy [-1 0 1]
         :when (not (= dx dy 0))]
-    [(+ dx x) (+ dy y)]))
+    {:x (+ dx x) :y (+ dy y)}))
 
 (defn next-gen [cells]
-  (set
-   (for [[loc c] (frequencies (mapcat neighbors cells))
-             :when (or (= c 3)
-                       (and (= c 2) (cells loc)))]
-         loc)))
+  (let [freqs (frequencies (mapcat neighbors cells))
+        neighbor-cells (map
+                        (fn [[{:keys [x y] :as cell} c]]
+                          (cond (= c 3) (merge cell {:state :born})
+                                (and (= c 2) (cell-at? cells x y)) (merge cell {:state :alive})
+                                :else nil))
+                        freqs)]
+    (set (filter (complement nil?) neighbor-cells))))
 
 (defn generations [cells]
   (iterate next-gen cells))
 
 (defn grid-dimensions [cells]
-  (let [xs (map first cells)
-        ys (map second cells)]
+  (let [xs (map :x cells)
+        ys (map :y cells)]
     {:x [(apply min xs) (apply max xs)]
      :y [(apply min ys) (apply max ys)]}))
 
@@ -56,11 +62,11 @@
         cell-width (Math/floor (/ w (- (inc x2) x1)))
         cell-height (Math/floor (/ h (- (inc y2) y1)))]
     (clear! ctx {:w w :h h})
-    (doseq [[x y] cells
+    (doseq [{:keys [x y state]} cells
             :let [x-start (* cell-width (- x x1))
                   y-start (* cell-height (- y y1))]]
       (-> ctx
-          (canvas/fill-style "#a00")
+          (canvas/fill-style (if (= state :alive) "#a00" "#f00"))
           (canvas/fill-rect {:x x-start :y y-start :w cell-width :h cell-height})))))
 
 (defn start [first]
@@ -74,4 +80,11 @@
              (<! (timeout (/ 1000 2.0)))
              (recur (next-gen cells)))))
 
-(start #{[1 1] [0 3] [1 2] [1 3] [3 2] [5 3] [6 3] [7 3]})
+(start #{{:x 1 :y 1}
+         {:x 0 :y 3}
+         {:x 1 :y 2}
+         {:x 1 :y 3}
+         {:x 3 :y 2}
+         {:x 5 :y 3}
+         {:x 6 :y 3}
+         {:x 7 :y 3}})

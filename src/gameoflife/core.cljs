@@ -59,7 +59,9 @@
   (dommy/listen! js/window :keydown #(put! keydowns (.-which %))))
 
 (defn adjust-cell-size! []
-  (let [c (chan)]
+  (let [c (chan)
+        min-size 1
+        max-size 128]
     (tap keydowns-mult c)
     (go-loop []
              (let [old-size (:cell-size @state)
@@ -67,12 +69,14 @@
                    new-size (cond
                              (= key *arrow-up*) (* old-size 2)
                              (= key *arrow-down*) (/ old-size 2))]
-               (when (and new-size (>= new-size 1))
+               (when (and new-size (>= new-size min-size) (<= new-size max-size))
                  (swap! state assoc-in [:cell-size] new-size))
                (recur)))))
 
 (defn adjust-speed! []
-  (let [c (chan)]
+  (let [c (chan)
+        min-speed 1
+        max-speed 60]
     (tap keydowns-mult c)
     (go-loop []
              (let [old-speed (:speed @state)
@@ -80,7 +84,7 @@
                    new-speed (cond
                               (= key *arrow-left*) (- old-speed 2)
                               (= key *arrow-right*) (+ old-speed 2))]
-               (when (and new-speed (> new-speed 0))
+               (when (and new-speed (>= new-speed min-speed) (<= new-speed max-speed))
                  (swap! state assoc-in [:speed] new-speed))
                (recur)))))
 

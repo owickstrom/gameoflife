@@ -9,7 +9,7 @@
                                :y [0 0]}
                   :canvas-size {:w 500
                                 :h 500}
-                  :cell-size 20
+                  :cell-size 16
                   :speed 10}))
 
 (defn cell-at? [cells x y]
@@ -67,7 +67,7 @@
                    new-size (cond
                              (= key *arrow-up*) (* old-size 2)
                              (= key *arrow-down*) (/ old-size 2))]
-               (when (and new-size (> new-size 0))
+               (when (and new-size (>= new-size 1))
                  (swap! state assoc-in [:cell-size] new-size))
                (recur)))))
 
@@ -95,7 +95,6 @@
   (let [resizes (debounce window-resizes 500)]
     (go-loop []
              (let [new-size (<! resizes)]
-               (.log js/console new-size)
                (set-canvas-size! canvas new-size)
                (recur)))))
 

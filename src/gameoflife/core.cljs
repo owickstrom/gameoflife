@@ -9,7 +9,8 @@
                                :y [0 0]}
                   :canvas-size {:w 500
                                 :h 500}
-                  :cell-size 20}))
+                  :cell-size 20
+                  :speed 10}))
 
 (defn cell-at? [cells x y]
   (some #(and (= x (:x %1)) (= y (:y %1))) cells))
@@ -72,20 +73,36 @@
 (def ^:dynamic *arrow-down* 40)
 
 (def keydowns (chan))
+(def keydowns-mult (mult keydowns))
 
 (defn publish-keydowns []
   (dommy/listen! js/window :keydown #(put! keydowns (.-which %))))
 
 (defn adjust-cell-size! []
-  (go-loop []
-           (let [old-size (:cell-size @state)
-                 key (<! keydowns)
-                 new-size (cond
-                            (= key *arrow-up*) (* old-size 2)
-                            (= key *arrow-down*) (/ old-size 2))]
-             (when (and new-size (> new-size 0))
-               (swap! state assoc-in [:cell-size] new-size))
-             (recur))))
+  (let [c (chan)]
+    (tap keydowns-mult c)
+    (go-loop []
+             (let [old-size (:cell-size @state)
+                   key (<! c)
+                   new-size (cond
+                             (= key *arrow-up*) (* old-size 2)
+                             (= key *arrow-down*) (/ old-size 2))]
+               (when (and new-size (> new-size 0))
+                 (swap! state assoc-in [:cell-size] new-size))
+               (recur)))))
+
+(defn adjust-speed! []
+  (let [c (chan)]
+    (tap keydowns-mult c)
+    (go-loop []
+             (let [old-speed (:speed @state)
+                   key (<! c)
+                   new-speed (cond
+                              (= key *arrow-left*) (- old-speed 2)
+                              (= key *arrow-right*) (+ old-speed 2))]
+               (when (and new-speed (> new-speed 0))
+                 (swap! state assoc-in [:speed] new-speed))
+               (recur)))))
 
 (def window-resizes (chan))
 
@@ -131,12 +148,13 @@
         ctx (.getContext canvas "2d")]
     (publish-keydowns)
     (adjust-cell-size!)
+    (adjust-speed!)
     (publish-window-resizes)
     (set-canvas-size! canvas (get-window-size))
     (adjust-to-window-size! canvas)
     (go-loop [cells first]
              (render! ctx cells)
-             (<! (timeout (/ 1000 2.0)))
+             (<! (timeout (/ 1000 (:speed @state))))
              (recur (next-gen cells)))))
 
 (start #{{:x -1 :y -1}

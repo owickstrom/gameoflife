@@ -47,10 +47,10 @@
              (recur))
     out))
 
-(def ^:dynamic *arrow-left* 37)
-(def ^:dynamic *arrow-up* 38)
-(def ^:dynamic *arrow-right* 39)
-(def ^:dynamic *arrow-down* 40)
+(def arrow-left 37)
+(def arrow-up 38)
+(def arrow-right 39)
+(def arrow-down 40)
 
 (def keydowns (chan))
 (def keydowns-mult (mult keydowns))
@@ -67,8 +67,8 @@
              (let [old-size (:cell-size @state)
                    key (<! c)
                    new-size (cond
-                             (= key *arrow-up*) (* old-size 2)
-                             (= key *arrow-down*) (/ old-size 2))]
+                             (= key arrow-up) (* old-size 2)
+                             (= key arrow-down) (/ old-size 2))]
                (when (and new-size (>= new-size min-size) (<= new-size max-size))
                  (swap! state assoc-in [:cell-size] new-size))
                (recur)))))
@@ -82,8 +82,8 @@
              (let [old-speed (:speed @state)
                    key (<! c)
                    new-speed (cond
-                              (= key *arrow-left*) (- old-speed 2)
-                              (= key *arrow-right*) (+ old-speed 2))]
+                              (= key arrow-left) (- old-speed 2)
+                              (= key arrow-right) (+ old-speed 2))]
                (when (and new-speed (>= new-speed min-speed) (<= new-speed max-speed))
                  (swap! state assoc-in [:speed] new-speed))
                (recur)))))

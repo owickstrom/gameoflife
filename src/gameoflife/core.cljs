@@ -8,7 +8,8 @@
 (def state (atom {:dimensions {:x [0 0]
                                :y [0 0]}
                   :canvas-size {:w 500
-                                :h 500}}))
+                                :h 500}
+                  :cell-size 20}))
 
 (defn cell-at? [cells x y]
   (some #(and (= x (:x %1)) (= y (:y %1))) cells))
@@ -65,10 +66,30 @@
              (recur))
     out))
 
+(def ^:dynamic *arrow-left* 37)
+(def ^:dynamic *arrow-up* 38)
+(def ^:dynamic *arrow-right* 39)
+(def ^:dynamic *arrow-down* 40)
+
+(def keydowns (chan))
+
+(defn publish-keydowns []
+  (dommy/listen! js/window :keydown #(put! keydowns (.-which %))))
+
+(defn adjust-cell-size! []
+  (go-loop []
+           (let [old-size (:cell-size @state)
+                 key (<! keydowns)
+                 new-size (cond
+                            (= key *arrow-up*) (* old-size 2)
+                            (= key *arrow-down*) (/ old-size 2))]
+             (when (and new-size (> new-size 0))
+               (swap! state assoc-in [:cell-size] new-size))
+             (recur))))
+
 (def window-resizes (chan))
 
 (defn set-canvas-size! [canvas {:keys [w h] :as size}]
-  (.log js/console "Setting size to " w h)
   (swap! state assoc-in [:canvas-size] size)
   (dommy/set-attr! canvas :width w)
   (dommy/set-attr! canvas :height h))
@@ -94,19 +115,22 @@
 (defn render! [ctx cells]
   (let [{:keys [w h]} (:canvas-size @state)
         {[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
-        cell-width (Math/floor (/ w (- (inc x2) x1)))
-        cell-height (Math/floor (/ h (- (inc y2) y1)))]
+        x-center (Math/round (/ w 2))
+        y-center (Math/round (/ h 2))
+        cell-size (:cell-size @state)]
     (clear! ctx {:w w :h h})
     (doseq [{:keys [x y state]} cells
-            :let [x-start (* cell-width (- x x1))
-                  y-start (* cell-height (- y y1))]]
+            :let [x-start (+ x-center (* cell-size x))
+                  y-start (+ y-center (* cell-size y))]]
       (-> ctx
           (canvas/fill-style (if (= state :alive) "#a00" "#f00"))
-          (canvas/fill-rect {:x x-start :y y-start :w cell-width :h cell-height})))))
+          (canvas/fill-rect {:x x-start :y y-start :w cell-size :h cell-size})))))
 
 (defn start [first]
   (let [canvas (sel1 :.game-of-life)
         ctx (.getContext canvas "2d")]
+    (publish-keydowns)
+    (adjust-cell-size!)
     (publish-window-resizes)
     (set-canvas-size! canvas (get-window-size))
     (adjust-to-window-size! canvas)
@@ -115,11 +139,11 @@
              (<! (timeout (/ 1000 2.0)))
              (recur (next-gen cells)))))
 
-(start #{{:x 1 :y 1}
-         {:x 0 :y 3}
-         {:x 1 :y 2}
-         {:x 1 :y 3}
-         {:x 3 :y 2}
-         {:x 5 :y 3}
-         {:x 6 :y 3}
-         {:x 7 :y 3}})
+(start #{{:x -1 :y -1}
+         {:x -2 :y 1}
+         {:x -1 :y 0}
+         {:x -1 :y 1}
+         {:x 1 :y 0}
+         {:x 3 :y 1}
+         {:x 4 :y 1}
+         {:x 5 :y 1}})

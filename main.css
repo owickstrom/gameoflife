@@ -8,25 +8,12 @@ html {
   margin: 0;
 }
 
+.legend {
+  position: fixed:
+  z-index: 1;
+  margin: 10px;
+  font-family: Monaco, monospace;
+}
 .game-of-life {
-  font-family: Courier, monospace;
-  font-size: 1.5rem;
-}
-
-.game-of-life table {
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.game-of-life td {
-  border: 1px solid #eee;
-  width: 30px;
-  height: 30px;
-  overflow: hidden;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.game-of-life td.off {
-  color: white;
+  position: fixed;
 }

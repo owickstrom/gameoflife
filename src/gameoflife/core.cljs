@@ -34,26 +34,6 @@
 (defn generations [cells]
   (iterate next-gen cells))
 
-(defn grid-dimensions [cells]
-  (let [xs (map :x cells)
-        ys (map :y cells)]
-    {:x [(apply min xs) (apply max xs)]
-     :y [(apply min ys) (apply max ys)]}))
-
-;; old = {:x [0 2] :y [1 5]}
-;; new = {:x [1 4] :y [0 3]}
-;; res = {:x [0 4] :y [0 5]}
-(defn expand-dimensions [old new]
-  (into {}
-        (map (fn [[key [f1 t1]] [_ [f2 t2]]]
-               {key [(min f1 f2) (max t1 t2)]})
-             old new)))
-
-(defn adjust-dimensions [dimensions]
-  (swap! state assoc-in [:dimensions]
-         (expand-dimensions (get-in @state [:dimensions])
-                            dimensions)))
-
 (defn debounce [src ms]
   (let [out (chan)]
     (go-loop []
@@ -131,7 +111,6 @@
 
 (defn render! [ctx cells]
   (let [{:keys [w h]} (:canvas-size @state)
-        {[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         x-center (Math/round (/ w 2))
         y-center (Math/round (/ h 2))
         cell-size (:cell-size @state)]

@@ -2,7 +2,7 @@
   (:require-macros [dommy.macros :refer [node sel sel1]]
                    [cljs.core.async.macros :refer [go-loop]])
   (:require [dommy.core :as dommy]
-            [cljs.core.async :refer [<! timeout]]
+            [cljs.core.async :refer [<! put! chan mult tap timeout]]
             [monet.canvas :as canvas]))
 
 (def state (atom {:dimensions {:x [0 0]
@@ -52,19 +52,41 @@
          (expand-dimensions (get-in @state [:dimensions])
                             dimensions)))
 
-(defn set-size! [canvas {:keys [w h] :as size}]
+(defn debounce [src ms]
+  (let [out (chan)]
+    (go-loop []
+             (let [first (<! src)
+                   done (timeout ms)]
+               (loop [msg first]
+                 (let [[next-msg ch] (alts! [src done])]
+                   (if (= ch src)
+                     (recur next-msg)
+                     (put! out msg)))))
+             (recur))
+    out))
+
+(def window-resizes (chan))
+
+(defn set-canvas-size! [canvas {:keys [w h] :as size}]
   (.log js/console "Setting size to " w h)
   (swap! state assoc-in [:canvas-size] size)
   (dommy/set-attr! canvas :width w)
   (dommy/set-attr! canvas :height h))
 
 (defn adjust-to-window-size! [canvas]
-  (.log js/console "Adjusting size")
-  (set-size! canvas {:w (aget js/window "innerWidth")
-                      :h (aget js/window "innerHeight")}))
+  (let [resizes (debounce window-resizes 500)]
+    (go-loop []
+             (let [new-size (<! resizes)]
+               (.log js/console new-size)
+               (set-canvas-size! canvas new-size)
+               (recur)))))
 
-(defn listen-for-window-resize! [canvas]
-  (dommy/listen! js/window :resize #(adjust-to-window-size! canvas)))
+(defn get-window-size []
+  {:w (aget js/window "innerWidth")
+   :h (aget js/window "innerHeight")})
+
+(defn publish-window-resizes []
+  (dommy/listen! js/window :resize #(put! window-resizes (get-window-size))))
 
 (defn clear! [ctx {:keys [w h]}]
   (canvas/clear-rect ctx {:x 0 :y 0 :w w :h h}))
@@ -74,7 +96,6 @@
         {[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         cell-width (Math/floor (/ w (- (inc x2) x1)))
         cell-height (Math/floor (/ h (- (inc y2) y1)))]
-    (.log js/console w h)
     (clear! ctx {:w w :h h})
     (doseq [{:keys [x y state]} cells
             :let [x-start (* cell-width (- x x1))
@@ -86,7 +107,8 @@
 (defn start [first]
   (let [canvas (sel1 :.game-of-life)
         ctx (.getContext canvas "2d")]
-    (listen-for-window-resize! canvas)
+    (publish-window-resizes)
+    (set-canvas-size! canvas (get-window-size))
     (adjust-to-window-size! canvas)
     (go-loop [cells first]
              (render! ctx cells)

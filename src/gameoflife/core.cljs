@@ -140,7 +140,7 @@
             :let [x-start (+ x-center (* cell-size x))
                   y-start (+ y-center (* cell-size y))]]
       (-> ctx
-          (canvas/fill-style (if (= state :alive) "#a00" "#f00"))
+          (canvas/fill-style (if (= state :alive) "#555" "#f00"))
           (canvas/fill-rect {:x x-start :y y-start :w cell-size :h cell-size})))))
 
 (defn start [first]

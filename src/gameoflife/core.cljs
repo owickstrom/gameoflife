@@ -6,7 +6,9 @@
             [monet.canvas :as canvas]))
 
 (def state (atom {:dimensions {:x [0 0]
-                               :y [0 0]}}))
+                               :y [0 0]}
+                  :canvas-size {:w 500
+                                :h 500}}))
 
 (defn cell-at? [cells x y]
   (some #(and (= x (:x %1)) (= y (:y %1))) cells))
@@ -50,17 +52,29 @@
          (expand-dimensions (get-in @state [:dimensions])
                             dimensions)))
 
-(defn set-size! [canvas {:keys [w h]}]
+(defn set-size! [canvas {:keys [w h] :as size}]
+  (.log js/console "Setting size to " w h)
+  (swap! state assoc-in [:canvas-size] size)
   (dommy/set-attr! canvas :width w)
   (dommy/set-attr! canvas :height h))
+
+(defn adjust-to-window-size! [canvas]
+  (.log js/console "Adjusting size")
+  (set-size! canvas {:w (aget js/window "innerWidth")
+                      :h (aget js/window "innerHeight")}))
+
+(defn listen-for-window-resize! [canvas]
+  (dommy/listen! js/window :resize #(adjust-to-window-size! canvas)))
 
 (defn clear! [ctx {:keys [w h]}]
   (canvas/clear-rect ctx {:x 0 :y 0 :w w :h h}))
 
-(defn render! [ctx {:keys [w h]} cells]
-  (let [{[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
+(defn render! [ctx cells]
+  (let [{:keys [w h]} (:canvas-size @state)
+        {[x1 x2] :x [y1 y2] :y} (:dimensions (adjust-dimensions (grid-dimensions cells)))
         cell-width (Math/floor (/ w (- (inc x2) x1)))
         cell-height (Math/floor (/ h (- (inc y2) y1)))]
+    (.log js/console w h)
     (clear! ctx {:w w :h h})
     (doseq [{:keys [x y state]} cells
             :let [x-start (* cell-width (- x x1))
@@ -70,13 +84,12 @@
           (canvas/fill-rect {:x x-start :y y-start :w cell-width :h cell-height})))))
 
 (defn start [first]
-  (let [canvas-dimensions {:w 500
-                           :h 500}
-        canvas (sel1 :.game-of-life)
+  (let [canvas (sel1 :.game-of-life)
         ctx (.getContext canvas "2d")]
-    (set-size! canvas canvas-dimensions)
+    (listen-for-window-resize! canvas)
+    (adjust-to-window-size! canvas)
     (go-loop [cells first]
-             (render! ctx canvas-dimensions cells)
+             (render! ctx cells)
              (<! (timeout (/ 1000 2.0)))
              (recur (next-gen cells)))))
 
